@@ -1,9 +1,19 @@
 package auth
 
-import "github.com/gin-gonic/gin"
+import (
+	"events/internal/api/user"
+	"events/internal/types"
+)
 
-func RegisterRoutes(server *gin.RouterGroup) {
-  router := server.Group("/auth")
+func RegisterRoutes(apiServer *types.APIServer) {
+	router := apiServer.APIRouter.Group("/auth")
+
+	userRepo := user.NewUserRepository(apiServer.DB)
+	authService := newService(userRepo)
+	userService := user.NewUserServices(userRepo)
   
-  router.POST("/signup", handleSignup)
+	handler := newHandler(userService, authService)
+
+	router.POST("/signup", handler.signup)
+	router.POST("/login", handler.login)
 }

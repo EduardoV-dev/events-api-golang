@@ -1,21 +1,20 @@
 package events
 
 import (
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
+	"events/internal/types"
 )
 
-func RegisterRoutes(router *gin.RouterGroup, db *mongo.Database) {
-	events := router.Group("/events")
+func RegisterRoutes(api *types.APIServer) {
+	router := api.APIRouter.Group("/events")
 
-	repository := newRepository(db, "events")
+	repository := newRepository(api.DB)
 	service := newService(repository)
 	handler := newHandler(service)
 
-	events.GET("", handler.getEvents)
-	events.GET("/:id", handler.getEventById)
+	router.GET("", handler.getEvents)
+	router.GET("/:id", handler.getEventById)
 
-	events.POST("", handler.createEvent)
-	events.PUT("/:id", handler.updateEvent)
-	events.DELETE("/:id", handler.deleteEvent)
+	router.POST("", handler.createEvent)
+	router.PUT("/:id", handler.updateEvent)
+	router.DELETE("/:id", handler.deleteEvent)
 }

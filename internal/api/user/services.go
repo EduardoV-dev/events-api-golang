@@ -2,26 +2,33 @@ package user
 
 import (
 	"events/internal/types"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
+	"events/internal/utils"
 )
 
-func (u *User) Create() error {
-	password, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+type UserService struct {
+	repo UserRepository
+}
+
+func NewUserServices(repo UserRepository) UserService {
+	return UserService{
+		repo,
+	}
+}
+
+func (s UserService) Create(creds *types.SignupCredentials) (*User, error) {
+	hashed, err := utils.HashPassword(creds.Password)
 
 	if err != nil {
-		return err
+		utils.Log("Error at hashing password:", err.Error())
+		return nil, err
 	}
 
-	u.Password = string(password)
-	u.Entity = &types.Entity{
-    Active: true,
-		Id:        primitive.NewObjectID(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	utils.Log("Hashed password:", hashed, creds.Password)
 
-	return nil
+	creds.Password = hashed
+	user := newUser(creds)
+
+	utils.Logf("%+v\n", user)
+
+	return user, s.repo.create(user)
 }

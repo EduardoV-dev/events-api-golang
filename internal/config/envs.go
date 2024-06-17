@@ -7,10 +7,15 @@ import (
 )
 
 type env struct {
-	DatabaseName string
-	Env          string
-	MongoURI     string
-	Port         string
+	AppPort         string
+	DBAuthMechanism string
+	DBHost          string
+	DBName          string
+	DBPassword      string
+	DBPort          string
+	DBUser          string
+	Env             string
+	JwtSecret       string
 }
 
 var Envs = initEnvs()
@@ -23,10 +28,15 @@ func initEnvs() env {
 	}
 
 	return env{
-		DatabaseName: getEnv("DATABASE_NAME", "events"),
-		Env:          getEnv("ENV", "development"),
-		MongoURI:     getEnv("MONGO_URI", "mongodb://localhost:27017/"),
-		Port:         getEnv("PORT", "3000"),
+		AppPort:         getEnv("APP_PORT", "3000"),
+		DBAuthMechanism: getEnv("DB_AUTH_MECHANISM", "SCRAM-SHA-256"),
+		DBHost:          getEnv("DB_HOST", "localhost"),
+		DBName:          getEnv("DB_NAME", "events"),
+		DBPassword:      getEnv("DB_PASSWORD", "secret"),
+		DBPort:          getEnv("DB_PORT", "27017"),
+		DBUser:          getEnv("DB_USER", "root"),
+		Env:             getEnv("ENV", "development"),
+    JwtSecret: getEnv("JWT_SECRET", "secret"),
 	}
 }
 

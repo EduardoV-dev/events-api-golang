@@ -2,7 +2,6 @@ package events
 
 import (
 	"errors"
-	"events/internal/types"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,7 +12,9 @@ type service struct {
 }
 
 func newService(repo repositoryMethods) service {
-	return service{repo}
+	return service{
+		repo,
+	}
 }
 
 func (s *service) list() (*[]Event, error) {
@@ -31,7 +32,7 @@ func (s *service) getById(idString string) (*Event, error, int) {
 }
 
 func (s *service) create(e *Event) error {
-	e.Entity = &types.InitialEntityValues
+	e.initialize()
 	return s.repo.create(e)
 }
 
@@ -39,7 +40,8 @@ func (s *service) update(id primitive.ObjectID, upd *Event) error {
 	if _, err, _ := s.repo.getById(id); err != nil {
 		return err
 	}
-  
+
+	upd.update()
 	return s.repo.update(id, upd)
 }
 

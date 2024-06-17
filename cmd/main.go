@@ -4,6 +4,7 @@ import (
 	"events/cmd/api"
 	"events/internal/config"
 	"events/internal/storage"
+	"events/internal/types"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,13 @@ import (
 func main() {
 	server := gin.Default()
 	db := storage.NewDatabase().StartClient()
+
 	apiRouter := server.Group("/api/v1")
-	app := api.NewAPIServer(apiRouter, db)
-  
-	app.StartAPI()
-	server.Run(fmt.Sprintf(":%s", config.Envs.Port))
+	app := &types.APIServer{
+		APIRouter: apiRouter,
+		DB:        db,
+	}
+
+	api.StartAPI(app)
+	server.Run(fmt.Sprintf(":%s", config.Envs.AppPort))
 }

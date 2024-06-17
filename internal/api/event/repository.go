@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"errors"
+	"events/internal/types"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,26 +23,16 @@ type repository struct {
 	db *mongo.Collection
 }
 
-func newRepository(db *mongo.Database, collection string) *repository {
+func newRepository(db types.Database) *repository {
 	return &repository{
-		db: db.Collection(collection),
+		db: db.Collection("events"),
 	}
 }
 
 func (r repository) create(e *Event) error {
-	res, err := r.db.InsertOne(context.TODO(), e)
-
-	if err != nil {
-		return err
-	}
-
-	if _, ok := res.InsertedID.(primitive.ObjectID); ok {
-		return nil
-	}
-
-	return errors.New("Event could not be created (Could not parse id)")
+	_, err := r.db.InsertOne(context.TODO(), e)
+	return err
 }
-
 
 func (r repository) getById(id primitive.ObjectID) (*Event, error, int) {
 	filter := bson.D{{Key: "active", Value: true}, {Key: "_id", Value: id}}
@@ -50,7 +41,7 @@ func (r repository) getById(id primitive.ObjectID) (*Event, error, int) {
 	if err := r.db.FindOne(context.TODO(), filter).Decode(&event); err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, errors.New("Event does not exist"), http.StatusNotFound
 	} else if err != nil {
-		return nil,err, http.StatusInternalServerError
+		return nil, err, http.StatusInternalServerError
 	}
 
 	return event, nil, http.StatusOK
