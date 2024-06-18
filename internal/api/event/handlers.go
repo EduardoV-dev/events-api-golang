@@ -1,9 +1,9 @@
 package events
 
 import (
+	"events/internal/api/auth"
 	"events/internal/utils"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,8 +12,8 @@ type handler struct {
 	serv service
 }
 
-func newHandler(s service) *handler {
-	return &handler{s}
+func newHandler(serv service) *handler {
+	return &handler{serv}
 }
 
 func (h handler) getEvents(ctx *gin.Context) {
@@ -29,13 +29,16 @@ func (h handler) getEvents(ctx *gin.Context) {
 }
 
 func (h handler) createEvent(ctx *gin.Context) {
-	event := validateRequestBody(ctx)
+	eventBody := validateRequestBody(ctx)
 
-	if event == (Event{}) {
+	if eventBody == (Event{}) {
 		return
 	}
 
-	if err := h.serv.create(&event); err != nil {
+	eventBody.UserId = auth.GetUserId(ctx)
+	event := newEvent(&eventBody)
+
+	if err := h.serv.create(event); err != nil {
 		utils.Log("Error at creating event:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create the event"})
 		return
@@ -85,11 +88,10 @@ func (h handler) updateEvent(ctx *gin.Context) {
 	event.Description = fieldsToUpdate.Description
 	event.Location = fieldsToUpdate.Location
 	event.Date = fieldsToUpdate.Date
-	event.UpdatedAt = time.Now()
 
-	if err := h.serv.update(event.Id, event); err != nil {
+	if err := h.serv.update(auth.GetUserId(ctx), event); err != nil {
 		utils.Log("Error at updating event:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not update event"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -103,9 +105,9 @@ func (h handler) deleteEvent(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.serv.delete(event.Id); err != nil {
-		utils.Log("Error at deleting event:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not delete event"})
+	if err := h.serv.delete(event.Id, event.UserId, auth.GetUserId(ctx)); err != nil {
+		utils.Log("Error at deleting event:", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 

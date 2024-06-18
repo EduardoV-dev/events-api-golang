@@ -13,7 +13,6 @@ import (
 
 type repositoryMethods interface {
 	create(e *Event) error
-	delete(id primitive.ObjectID) error
 	getById(id primitive.ObjectID) (e *Event, err error, statusCode int)
 	list() (*[]Event, error)
 	update(id primitive.ObjectID, e any) error
@@ -22,6 +21,10 @@ type repositoryMethods interface {
 type repository struct {
 	db *mongo.Collection
 }
+
+var (
+  ErrorEventUnexistant = errors.New("Event does not exist")
+)
 
 func newRepository(db types.Database) *repository {
 	return &repository{
@@ -39,7 +42,7 @@ func (r repository) getById(id primitive.ObjectID) (*Event, error, int) {
 	var event *Event
 
 	if err := r.db.FindOne(context.TODO(), filter).Decode(&event); err != nil && errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, errors.New("Event does not exist"), http.StatusNotFound
+		return nil, ErrorEventUnexistant, http.StatusNotFound
 	} else if err != nil {
 		return nil, err, http.StatusInternalServerError
 	}
@@ -75,6 +78,6 @@ func (r repository) update(id primitive.ObjectID, data any) error {
 	}
 }
 
-func (r repository) delete(id primitive.ObjectID) error {
+/* func (r repository) delete(id primitive.ObjectID) error {
 	return r.update(id, bson.D{{Key: "active", Value: false}})
-}
+} */

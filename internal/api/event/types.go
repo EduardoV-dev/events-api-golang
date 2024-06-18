@@ -15,14 +15,23 @@ type Event struct {
 	Location    string             `json:"location" binding:"required"`
 	Name        string             `json:"name" binding:"required"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+	UserId      primitive.ObjectID `bson:"user_id" json:"user_id"`
 }
 
-// Sets default values to meta data attributes
-func (e *Event) initialize() {
-	e.Active = true
-	e.CreatedAt = time.Now()
-	e.Id = primitive.NewObjectID()
-	e.UpdatedAt = time.Now()
+func newEvent(e *Event) *Event {
+	now := time.Now()
+
+	return &Event{
+		Active:      true,
+		CreatedAt:   now,
+		Date:        e.Date,
+		Description: e.Description,
+		Id:          primitive.NewObjectID(),
+		Location:    e.Description,
+		Name:        e.Name,
+		UpdatedAt:   now,
+		UserId:      e.UserId,
+	}
 }
 
 // Updates the UpdateAt attribute with the current time (time.Now())

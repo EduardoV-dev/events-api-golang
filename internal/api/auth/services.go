@@ -23,8 +23,6 @@ func (s service) login(creds *loginCredentials) (string, error) {
 		return "", err
 	}
 
-	utils.Log("Passwords", user.Password, creds.Password)
-
 	if ok := utils.ComparePasswords(user.Password, creds.Password); !ok {
     return "", errors.New("Incorrect Password")
   }
