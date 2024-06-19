@@ -41,7 +41,7 @@ func initEnvs() env {
 	err := godotenv.Load(getEnvFileToLoad())
 
 	if err != nil {
-		panic("Could not load envs")
+    panic(fmt.Sprintf("Could not load envs: %s", err.Error()))
 	}
 
 	return env{
