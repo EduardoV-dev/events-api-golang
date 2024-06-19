@@ -1,42 +1,59 @@
 package config
 
 import (
+	"flag"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 )
 
 type env struct {
-	AppPort         string
-	DBAuthMechanism string
-	DBHost          string
-	DBName          string
-	DBPassword      string
-	DBPort          string
-	DBUser          string
-	Env             string
-	JwtSecret       string
+	AppPort     string
+	DBExtraArgs string
+	DBHost      string
+	DBName      string
+	DBPassword  string
+	DBPort      string
+	DBUser      string
+	Env         string
+	JwtSecret   string
 }
 
 var Envs = initEnvs()
 
+// Enables passing an env variable when executing go run command in the terminal
+// to run the go application, this way, multiple environments could be executed locally
+func getEnvFileToLoad () string {
+	environment := flag.String("env", "", "environment to load the .env file")
+	flag.Parse()
+  
+	envFileToLoad := ".env"
+
+	if *environment != "" {
+		envFileToLoad += fmt.Sprintf(".%s", *environment)
+	}
+
+  return envFileToLoad
+} 
+
 func initEnvs() env {
-	err := godotenv.Load()
+	err := godotenv.Load(getEnvFileToLoad())
 
 	if err != nil {
 		panic("Could not load envs")
 	}
 
 	return env{
-		AppPort:         getEnv("APP_PORT", "3000"),
-		DBAuthMechanism: getEnv("DB_AUTH_MECHANISM", "SCRAM-SHA-256"),
-		DBHost:          getEnv("DB_HOST", "localhost"),
-		DBName:          getEnv("DB_NAME", "events"),
-		DBPassword:      getEnv("DB_PASSWORD", "secret"),
-		DBPort:          getEnv("DB_PORT", "27017"),
-		DBUser:          getEnv("DB_USER", "root"),
-		Env:             getEnv("ENV", "development"),
-    JwtSecret: getEnv("JWT_SECRET", "secret"),
+		AppPort:     getEnv("APP_PORT", "3000"),
+		DBExtraArgs: getEnv("DB_EXTRA_ARGS", ""),
+		DBHost:      getEnv("DB_HOST", "localhost"),
+		DBName:      getEnv("DB_NAME", "events"),
+		DBPassword:  getEnv("DB_PASSWORD", "secret"),
+		DBPort:      getEnv("DB_PORT", "27017"),
+		DBUser:      getEnv("DB_USER", "root"),
+		Env:         getEnv("ENV", "development"),
+		JwtSecret:   getEnv("JWT_SECRET", "secret"),
 	}
 }
 

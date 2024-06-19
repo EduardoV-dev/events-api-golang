@@ -20,18 +20,19 @@ func newService(repo repositoryMethods) service {
 }
 
 var (
-	ErrorUserNotAuthor = errors.New("Unauthorized to access the event")
+	errorUserNotAuthor    = errors.New("Unauthorized to access the event")
+	errorNotValidIdFormat = errors.New("Provided id does not have a valid mongo ID format")
 )
 
 func (s *service) list() (*[]Event, error) {
 	return s.repo.list()
 }
 
-func (s *service) getById(idString string) (*Event, error, int) {
+func (s *service) getById(idString string) (*Event, *utils.HttpError) {
 	id, err := primitive.ObjectIDFromHex(idString)
 
 	if err != nil {
-		return nil, errors.New("ID is not a valid mongo ID value"), http.StatusInternalServerError
+		return nil, utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 
 	return s.repo.getById(id)
@@ -41,29 +42,31 @@ func (s *service) create(e *Event) error {
 	return s.repo.create(e)
 }
 
-func checkEventOwning(userId, userCreatorId primitive.ObjectID) error {
+func checkEventOwning(userId, userCreatorId primitive.ObjectID) *utils.HttpError {
 	if owned := userCreatorId == userId; !owned {
-    utils.Log("owned", owned, userCreatorId, userId)
-		return ErrorUserNotAuthor
+		return utils.NewHttpError(errorUserNotAuthor, http.StatusUnauthorized)
 	}
 
 	return nil
 }
 
-func (s *service) update(userId primitive.ObjectID, upd *Event) error {
+func (s *service) update(userId primitive.ObjectID, upd *Event) *utils.HttpError {
 	if err := checkEventOwning(userId, upd.UserId); err != nil {
 		return err
 	}
 
 	upd.update()
-	return s.repo.update(upd.Id, upd)
+  err := s.repo.update(upd.Id, upd)
+  
+	return utils.NewHttpError(err, http.StatusInternalServerError)
 }
 
-func (s *service) delete(id, userCreatorId, userId primitive.ObjectID) error {
+func (s *service) delete(id, userCreatorId, userId primitive.ObjectID) *utils.HttpError {
 	if err := checkEventOwning(userId, userCreatorId); err != nil {
 		return err
 	}
 
 	activeAttrs := bson.D{{Key: "active", Value: false}}
-	return s.repo.update(id, activeAttrs)
+  err := s.repo.update(id, activeAttrs)
+	return utils.NewHttpError(err, http.StatusInternalServerError)
 }

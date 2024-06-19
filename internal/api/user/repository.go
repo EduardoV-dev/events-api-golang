@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"events/internal/types"
+	"events/internal/utils"
+	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,7 +13,7 @@ import (
 
 type UserRepository interface {
 	create(u *User) error
-	GetByEmail(email string) (u *User, err error)
+	GetByEmail(email string) (u *User, err *utils.HttpError)
 }
 
 type repository struct {
@@ -20,7 +22,7 @@ type repository struct {
 
 var (
 	RepositoryTable     = "users"
-	UserUnexistantError = errors.New("User does not exists")
+	errorUserUnexistant = errors.New("User does not exists")
 )
 
 func NewUserRepository(db types.Database) repository {
@@ -34,14 +36,14 @@ func (r repository) create(u *User) error {
 	return err
 }
 
-func (r repository) GetByEmail(email string) (*User, error) {
+func (r repository) GetByEmail(email string) (*User, *utils.HttpError) {
 	user := new(User)
 	filter := bson.D{{Key: "active", Value: true}, {Key: "email", Value: email}}
 
 	if err := r.db.FindOne(context.TODO(), filter).Decode(user); err != nil && errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, UserUnexistantError
+		return nil, utils.NewHttpError(errorUserUnexistant, http.StatusNotFound)
 	} else if err != nil {
-		return nil, err
+		return nil, utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 
 	return user, nil

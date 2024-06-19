@@ -3,6 +3,7 @@ package user
 import (
 	"events/internal/types"
 	"events/internal/utils"
+	"log"
 )
 
 type UserService struct {
@@ -19,16 +20,12 @@ func (s UserService) Create(creds *types.SignupCredentials) (*User, error) {
 	hashed, err := utils.HashPassword(creds.Password)
 
 	if err != nil {
-		utils.Log("Error at hashing password:", err.Error())
+		log.Println("Error at hashing password:", err.Error())
 		return nil, err
 	}
 
-	utils.Log("Hashed password:", hashed, creds.Password)
-
 	creds.Password = hashed
 	user := newUser(creds)
-
-	utils.Logf("%+v\n", user)
 
 	return user, s.repo.create(user)
 }

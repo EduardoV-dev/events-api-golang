@@ -1,5 +1,8 @@
 build:
-	@go build -o bin/events-api cmd/main.go
+	@go build -o bin/app cmd/main.go
 
-run: build
-	@./bin/events-api
+prod: build
+	@./bin/app
+
+dev:
+	@go run cmd/main.go -env=development

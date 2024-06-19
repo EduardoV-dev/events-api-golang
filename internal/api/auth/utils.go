@@ -2,7 +2,6 @@ package auth
 
 import (
 	"events/internal/config"
-	"events/internal/utils"
 	"log"
 	"time"
 
@@ -42,7 +41,7 @@ func validateToken(tokenString string) (*authClaims, bool) {
 	})
 
 	if err != nil {
-		utils.Log("Error at validating token", err.Error())
+		log.Println("Error at validating token", err.Error())
 		return nil, false
 	}
 

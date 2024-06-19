@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"events/internal/types"
+	"events/internal/utils"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,7 +14,7 @@ import (
 
 type repositoryMethods interface {
 	create(e *Event) error
-	getById(id primitive.ObjectID) (e *Event, err error, statusCode int)
+	getById(id primitive.ObjectID) (e *Event, err *utils.HttpError)
 	list() (*[]Event, error)
 	update(id primitive.ObjectID, e any) error
 }
@@ -23,7 +24,7 @@ type repository struct {
 }
 
 var (
-  ErrorEventUnexistant = errors.New("Event does not exist")
+	errorEventUnexistant = errors.New("Event does not exist")
 )
 
 func newRepository(db types.Database) *repository {
@@ -37,17 +38,17 @@ func (r repository) create(e *Event) error {
 	return err
 }
 
-func (r repository) getById(id primitive.ObjectID) (*Event, error, int) {
+func (r repository) getById(id primitive.ObjectID) (*Event, *utils.HttpError) {
 	filter := bson.D{{Key: "active", Value: true}, {Key: "_id", Value: id}}
 	var event *Event
 
 	if err := r.db.FindOne(context.TODO(), filter).Decode(&event); err != nil && errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, ErrorEventUnexistant, http.StatusNotFound
+		return nil, utils.NewHttpError(errorEventUnexistant, http.StatusNotFound)
 	} else if err != nil {
-		return nil, err, http.StatusInternalServerError
+		return nil, utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 
-	return event, nil, http.StatusOK
+	return event, nil
 }
 
 func (r repository) list() (*[]Event, error) {
@@ -77,7 +78,3 @@ func (r repository) update(id primitive.ObjectID, data any) error {
 		return err
 	}
 }
-
-/* func (r repository) delete(id primitive.ObjectID) error {
-	return r.update(id, bson.D{{Key: "active", Value: false}})
-} */

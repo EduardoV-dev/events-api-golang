@@ -4,6 +4,7 @@ import (
 	"errors"
 	"events/internal/api/user"
 	"events/internal/utils"
+	"net/http"
 )
 
 type service struct {
@@ -16,15 +17,19 @@ func newService(repo user.UserRepository) service {
 	}
 }
 
-func (s service) login(creds *loginCredentials) (string, error) {
+var (
+  errorIncorrectPassword = errors.New("Incorrect Password") 
+)
+
+func (s service) login(creds *loginCredentials) (string, *utils.HttpError) {
 	user, err := s.repo.GetByEmail(creds.Email)
 
 	if err != nil {
-		return "", err
+		return "", nil
 	}
 
 	if ok := utils.ComparePasswords(user.Password, creds.Password); !ok {
-    return "", errors.New("Incorrect Password")
+    return "", utils.NewHttpError(errorIncorrectPassword, http.StatusUnauthorized)
   }
 
 	if token, err := generateToken(authClaims{
@@ -34,6 +39,6 @@ func (s service) login(creds *loginCredentials) (string, error) {
 	}); err == nil {
 		return token, nil
 	} else {
-		return "", err
+		return "", utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 }

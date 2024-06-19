@@ -2,7 +2,7 @@ package events
 
 import (
 	"events/internal/api/auth"
-	"events/internal/utils"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func (h handler) getEvents(ctx *gin.Context) {
 	events, err := h.serv.list()
 
 	if err != nil {
-		utils.Log("error at getting events", err)
+		log.Println("error at getting events", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the events"})
 		return
 	}
@@ -39,7 +39,7 @@ func (h handler) createEvent(ctx *gin.Context) {
 	event := newEvent(&eventBody)
 
 	if err := h.serv.create(event); err != nil {
-		utils.Log("Error at creating event:", err)
+		log.Println("Error at creating event:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create the event"})
 		return
 	}
@@ -54,11 +54,10 @@ When called, if the function returns an empty struct, it will handle the errors,
 define if whether the event is empty or not (event == (Event{})), if it is empty, only apply a return clause
 */
 func (h handler) handleEventExistance(ctx *gin.Context) *Event {
-	event, err, statusCode := h.serv.getById(ctx.Param("id"))
+	event, err := h.serv.getById(ctx.Param("id"))
 
 	if err != nil {
-		utils.Log("Error at searching by id:", err)
-		ctx.JSON(statusCode, gin.H{"message": err.Error()})
+		ctx.JSON(err.Status, gin.H{"message": err.Message})
 		return &Event{}
 	}
 
@@ -90,8 +89,7 @@ func (h handler) updateEvent(ctx *gin.Context) {
 	event.Date = fieldsToUpdate.Date
 
 	if err := h.serv.update(auth.GetUserId(ctx), event); err != nil {
-		utils.Log("Error at updating event:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(err.Status, gin.H{"message": err.Message})
 		return
 	}
 
@@ -106,10 +104,9 @@ func (h handler) deleteEvent(ctx *gin.Context) {
 	}
 
 	if err := h.serv.delete(event.Id, event.UserId, auth.GetUserId(ctx)); err != nil {
-		utils.Log("Error at deleting event:", err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(err.Status, gin.H{"message": err.Message})
 		return
 	}
-
+  
 	ctx.JSON(http.StatusOK, event)
 }
