@@ -32,8 +32,7 @@ func (h handler) signup(ctx *gin.Context) {
 	}
 
 	if user, err := h.userServ.Create(creds); err != nil {
-		log.Println("Error at creating user:", err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create the user"})
+		ctx.JSON(err.Status, gin.H{"message": err.Message})
 	} else {
 		ctx.JSON(http.StatusCreated, user)
 	}
@@ -51,7 +50,6 @@ func (h handler) login(ctx *gin.Context) {
 	token, err := h.authServ.login(creds)
 
 	if err != nil && err.Status == http.StatusNotFound {
-		log.Println("Error at login:", err.Message)
 		ctx.JSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("User with %s email does not exist", creds.Email)})
 		return
 	} else if err != nil {

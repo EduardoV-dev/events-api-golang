@@ -25,7 +25,7 @@ func (s service) login(creds *loginCredentials) (string, *utils.HttpError) {
 	user, err := s.repo.GetByEmail(creds.Email)
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	if ok := utils.ComparePasswords(user.Password, creds.Password); !ok {

@@ -12,7 +12,7 @@ import (
 )
 
 type UserRepository interface {
-	create(u *User) error
+	create(u *User) *utils.HttpError
 	GetByEmail(email string) (u *User, err *utils.HttpError)
 }
 
@@ -31,9 +31,9 @@ func NewUserRepository(db types.Database) repository {
 	}
 }
 
-func (r repository) create(u *User) error {
+func (r repository) create(u *User) *utils.HttpError {
 	_, err := r.db.InsertOne(context.TODO(), u)
-	return err
+	return utils.NewHttpError(err, http.StatusInternalServerError)
 }
 
 func (r repository) GetByEmail(email string) (*User, *utils.HttpError) {

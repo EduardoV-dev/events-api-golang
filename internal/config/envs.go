@@ -10,6 +10,7 @@ import (
 
 type env struct {
 	AppPort     string
+	DBPrefix    string
 	DBExtraArgs string
 	DBHost      string
 	DBName      string
@@ -24,28 +25,29 @@ var Envs = initEnvs()
 
 // Enables passing an env variable when executing go run command in the terminal
 // to run the go application, this way, multiple environments could be executed locally
-func getEnvFileToLoad () string {
+func getEnvFileToLoad() string {
 	environment := flag.String("env", "", "environment to load the .env file")
 	flag.Parse()
-  
+
 	envFileToLoad := ".env"
 
 	if *environment != "" {
 		envFileToLoad += fmt.Sprintf(".%s", *environment)
 	}
 
-  return envFileToLoad
-} 
+	return envFileToLoad
+}
 
 func initEnvs() env {
 	err := godotenv.Load(getEnvFileToLoad())
 
 	if err != nil {
-    panic(fmt.Sprintf("Could not load envs: %s", err.Error()))
+		panic(fmt.Sprintf("Could not load envs: %s", err.Error()))
 	}
 
 	return env{
 		AppPort:     getEnv("APP_PORT", "3000"),
+		DBPrefix:    getEnv("DB_PREFIX", "mongodb"),
 		DBExtraArgs: getEnv("DB_EXTRA_ARGS", ""),
 		DBHost:      getEnv("DB_HOST", "localhost"),
 		DBName:      getEnv("DB_NAME", "events"),

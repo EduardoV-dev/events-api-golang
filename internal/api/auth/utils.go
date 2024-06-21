@@ -41,7 +41,7 @@ func validateToken(tokenString string) (*authClaims, bool) {
 	})
 
 	if err != nil {
-		log.Println("Error at validating token", err.Error())
+    log.Println("Error at validating token:", err.Error())
 		return nil, false
 	}
 

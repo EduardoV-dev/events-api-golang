@@ -24,7 +24,7 @@ var (
 	errorNotValidIdFormat = errors.New("Provided id does not have a valid mongo ID format")
 )
 
-func (s *service) list() (*[]Event, error) {
+func (s *service) list() (*[]Event, *utils.HttpError) {
 	return s.repo.list()
 }
 
@@ -38,7 +38,7 @@ func (s *service) getById(idString string) (*Event, *utils.HttpError) {
 	return s.repo.getById(id)
 }
 
-func (s *service) create(e *Event) error {
+func (s *service) create(e *Event) *utils.HttpError {
 	return s.repo.create(e)
 }
 
@@ -58,7 +58,7 @@ func (s *service) update(userId primitive.ObjectID, upd *Event) *utils.HttpError
 	upd.update()
   err := s.repo.update(upd.Id, upd)
   
-	return utils.NewHttpError(err, http.StatusInternalServerError)
+	return err
 }
 
 func (s *service) delete(id, userCreatorId, userId primitive.ObjectID) *utils.HttpError {
@@ -68,5 +68,6 @@ func (s *service) delete(id, userCreatorId, userId primitive.ObjectID) *utils.Ht
 
 	activeAttrs := bson.D{{Key: "active", Value: false}}
   err := s.repo.update(id, activeAttrs)
-	return utils.NewHttpError(err, http.StatusInternalServerError)
+  
+	return err
 }

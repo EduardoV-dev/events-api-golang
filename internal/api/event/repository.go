@@ -13,10 +13,10 @@ import (
 )
 
 type repositoryMethods interface {
-	create(e *Event) error
+	create(e *Event) *utils.HttpError
 	getById(id primitive.ObjectID) (e *Event, err *utils.HttpError)
-	list() (*[]Event, error)
-	update(id primitive.ObjectID, e any) error
+	list() (*[]Event, *utils.HttpError)
+	update(id primitive.ObjectID, e any) *utils.HttpError
 }
 
 type repository struct {
@@ -33,9 +33,9 @@ func newRepository(db types.Database) *repository {
 	}
 }
 
-func (r repository) create(e *Event) error {
+func (r repository) create(e *Event) *utils.HttpError {
 	_, err := r.db.InsertOne(context.TODO(), e)
-	return err
+	return utils.NewHttpError(err, http.StatusInternalServerError)
 }
 
 func (r repository) getById(id primitive.ObjectID) (*Event, *utils.HttpError) {
@@ -51,30 +51,30 @@ func (r repository) getById(id primitive.ObjectID) (*Event, *utils.HttpError) {
 	return event, nil
 }
 
-func (r repository) list() (*[]Event, error) {
+func (r repository) list() (*[]Event, *utils.HttpError) {
 	filter := bson.D{{Key: "active", Value: true}}
 	cur, err := r.db.Find(context.TODO(), filter)
 
 	if err != nil {
-		return nil, err
+		return nil, utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 
 	var events = []Event{}
 
 	if err = cur.All(context.TODO(), &events); err != nil {
-		return nil, err
+		return nil, utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 
 	return &events, nil
 }
 
-func (r repository) update(id primitive.ObjectID, data any) error {
+func (r repository) update(id primitive.ObjectID, data any) *utils.HttpError {
 	filter := bson.D{{Key: "_id", Value: id}}
 	update := bson.D{{Key: "$set", Value: data}}
 
 	if res, err := r.db.UpdateOne(context.TODO(), filter, update); err == nil && res.ModifiedCount != 0 {
 		return nil
 	} else {
-		return err
+		return utils.NewHttpError(err, http.StatusInternalServerError)
 	}
 }

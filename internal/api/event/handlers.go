@@ -20,7 +20,7 @@ func (h handler) getEvents(ctx *gin.Context) {
 	events, err := h.serv.list()
 
 	if err != nil {
-		log.Println("error at getting events", err)
+    log.Println("Error at getting events:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the events"})
 		return
 	}

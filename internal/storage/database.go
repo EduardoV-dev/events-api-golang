@@ -18,27 +18,23 @@ type database struct {
 
 var (
 	dbName    = config.Envs.DBName
+	extraArgs = config.Envs.DBExtraArgs
 	host      = config.Envs.DBHost
 	password  = config.Envs.DBPassword
 	port      = config.Envs.DBPort
 	user      = config.Envs.DBUser
-	extraArgs = config.Envs.DBExtraArgs
+	prefix    = config.Envs.DBPrefix
 )
 
 func NewDatabase() *database {
-	isDevelopment := config.Envs.Env == "development"
+  isDevelopment := config.Envs.Env == "development"
+  dbPort := ""
   
-	hostPort := fmt.Sprint(":", port)
-	mongoPrefix := "mongodb"
-  args := ""
-
-	if !isDevelopment {
-		mongoPrefix += "+srv"
-		hostPort = ""
-    args = extraArgs
-	}
-
-	URIString := fmt.Sprintf("%s://%s:%s@%s%s/%s", mongoPrefix, user, password, host, hostPort, args)
+  if isDevelopment {
+    dbPort = fmt.Sprintf(":%s", port) 
+  }
+  
+	URIString := fmt.Sprintf("%s://%s:%s@%s%s/%s", prefix, user, password, host, dbPort, extraArgs)
 
 	return &database{
 		uri: URIString,
@@ -52,7 +48,7 @@ func (d database) StartClient() types.Database {
 	client, err := mongo.Connect(context.TODO(), clientOpts)
 
 	if err != nil {
-		log.Println("Error: ", err.Error())
+		log.Println("Error at starting mongo instance:", err.Error())
 		panic("Could not start mongo instance")
 	}
 
@@ -61,6 +57,6 @@ func (d database) StartClient() types.Database {
 	}
 
 	log.Println("Successfully Connected to MongoDB!")
-  
+
 	return client.Database(dbName)
 }
